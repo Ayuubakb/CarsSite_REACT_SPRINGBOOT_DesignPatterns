@@ -12,16 +12,16 @@ Car Purchase Application with the functionalities :
 
 ## Demo
 - Builder Design Pattern
-![Alt text](./Assets/img1.png)
+![Alt text](/Assets/img1.png)
 - Strategy Design Pattern
-![Alt text](./Assets/img2.png)
+![Alt text](/Assets/img2.png)
 - Observer Design Pattern
-![Alt text](./Assets/img3.png)
+![Alt text](/Assets/img3.png)
 - Take A Look :smiley:
-![Alt text](./Assets/img4.png)
-![Alt text](./Assets/img5.png)
-![Alt text](./Assets/img6.png)
-![Alt text](./Assets/img7.png)
-![Alt text](./Assets/img8.png)
+![Alt text](/Assets/img4.png)
+![Alt text](/Assets/img5.png)
+![Alt text](/Assets/img6.png)
+![Alt text](/Assets/img7.png)
+![Alt text](/Assets/img8.png)
 
 
