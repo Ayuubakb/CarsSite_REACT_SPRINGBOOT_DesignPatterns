@@ -22,7 +22,6 @@ public class usedCar {
     private int mileage;
     private String seller;
 
-
     public String  getId() {
         return id;
     }

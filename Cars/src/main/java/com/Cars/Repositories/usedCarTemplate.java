@@ -11,10 +11,26 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class usedCarTemplate {
     @Autowired
     private MongoTemplate mt;
+
+    public List<usedCar> findCars(String maker,String model,int year ){
+        Query query=new Query();
+        if(!maker.equals("nomakerspecified")){
+            query.addCriteria(Criteria.where("maker").regex(maker,"i"));
+        }
+        if(!model.equals("nomodelspecified")){
+            query.addCriteria(Criteria.where("model").regex(model,"i"));
+        }
+        if(year!=404){
+            query.addCriteria(Criteria.where("year").is(year));
+        }
+        return mt.find(query, usedCar.class);
+    }
     public long addFav(Object login, Fav fav){
         Query query = new Query();
         query.addCriteria(Criteria.where("login").is(login));

@@ -1,11 +1,13 @@
 package com.Cars.Controllers;
 
-import com.Cars.Models.User;
 import com.Cars.Models.usedCar;
+import com.Cars.Observer.DataBasePublisher;
+import com.Cars.Observer.NotifObs;
 import com.Cars.Projections.Seller;
 import com.Cars.Repositories.UserRepo;
 import com.Cars.Repositories.usedCarTemplate;
 import com.Cars.Repositories.usedCarsRepo;
+import com.Cars.Strategy.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.bson.BsonBinarySubType;
@@ -38,36 +40,26 @@ public class usedCarsController {
 
     @PostMapping(path = "/add", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> addCar(@RequestPart("usedcar") usedCar usedCar, @RequestPart(name = "description", required = false) String Description , @RequestPart(name = "photo", required = false) MultipartFile photo, HttpServletRequest req) throws IOException {
-        usedCar usedCarF;
-        HashMap<String,Object> photoObject=new HashMap<String,Object>();
         HttpSession session=req.getSession(false);
+        Context context = new Context();
         if(session != null) {
             if (photo != null && Description != null) {
-                photoObject.put("photoBase", new Binary(BsonBinarySubType.BINARY, photo.getBytes()));
-                photoObject.put("extension", photo.getOriginalFilename().split("\\.")[1]);
-                usedCarF = new usedCar
-                        .usedCarBuilder(usedCar.getMaker(), usedCar.getModel(), usedCar.getYear(), usedCar.getMileage(), usedCar.getPrice(),((HashMap<String,String>)session.getAttribute("UserInfo")).get("Login"))
-                        .setPhoto(photoObject)
-                        .setDescription(Description)
-                        .build();
+                context.setCarStrategy(new PhotoDescription());
             } else if (photo == null && Description != null) {
-                usedCarF = new usedCar
-                        .usedCarBuilder(usedCar.getMaker(), usedCar.getModel(), usedCar.getYear(), usedCar.getMileage(), usedCar.getPrice(),((HashMap<String,String>)session.getAttribute("UserInfo")).get("Login"))
-                        .setDescription(usedCar.getDescription())
-                        .build();
+                context.setCarStrategy(new Description());
             } else if (Description == null && photo != null) {
-                photoObject.put("photoBase", new Binary(BsonBinarySubType.BINARY, photo.getBytes()));
-                photoObject.put("extension", photo.getOriginalFilename().split("\\.")[1]);
-                usedCarF = new usedCar
-                        .usedCarBuilder(usedCar.getMaker(), usedCar.getModel(), usedCar.getYear(), usedCar.getMileage(), usedCar.getPrice(),((HashMap<String,String>)session.getAttribute("UserInfo")).get("Login"))
-                        .setPhoto(photoObject)
-                        .build();
+                context.setCarStrategy(new Photo());
             } else {
-                usedCarF = new usedCar
-                        .usedCarBuilder(usedCar.getMaker(), usedCar.getModel(), usedCar.getYear(), usedCar.getMileage(), usedCar.getPrice(),((HashMap<String,String>)session.getAttribute("UserInfos")).get("Id"))
-                        .build();
+                context.setCarStrategy(new NoPhotoNoDescription());
             }
-            usedCarRepo.insert(usedCarF);
+            usedCarRepo.insert(context.executeStrategy(usedCar,photo,Description,session));
+            DataBasePublisher dbp=new DataBasePublisher();
+            NotifObs no=new NotifObs();
+            dbp.addObserver(no);
+            HashMap<String,String> msg=new HashMap<>();
+            msg.put("Maker",usedCar.getMaker());
+            msg.put("Model",usedCar.getModel());
+            dbp.setMsg(msg);
             return new ResponseEntity<>("Car Added",HttpStatus.CREATED);
         }else{
             return new ResponseEntity<>("You Should Login First",HttpStatus.FORBIDDEN);
@@ -92,7 +84,8 @@ public class usedCarsController {
 
     @GetMapping("/getCars/{model}/{maker}/{year}")
     public ResponseEntity<List<usedCar>> getCars(@PathVariable String model, @PathVariable String maker, @PathVariable int year, Model mode){
-        List<usedCar> usedCars=usedCarRepo.findUsedCars(model,maker,year);
+        //List<usedCar> usedCars=usedCarRepo.findUsedCars(model,maker,year);
+        List<usedCar> usedCars= usedCarTemplate.findCars(maker,model,year);
         if(usedCars.size()!=0){
             for(usedCar us: usedCars){
                 if(us.getPhoto()!=null) {
@@ -117,4 +110,22 @@ public class usedCarsController {
         full.put("Car",theCar);
         return new ResponseEntity<>(full, HttpStatus.OK);
     }
+
+    /*@GetMapping("/carsImage/{maker}/{model}/{year}")
+    public String getImage(@PathVariable String maker,@PathVariable String model,@PathVariable String year ) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create("https://serpapi.com/search.json?engine=google_images&q="+maker+"%20"+model+"%20"+year+"%20car&api_key=2526a4f46452d1cfb1015284e551c6ffcdeaab9e3929fce8a60f7058413afa38"))
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ImageApiResponse myObject = objectMapper.readValue(response.body(),ImageApiResponse.class);
+
+        System.out.println("Response: " + myObject.getSuggested_searches().get(0).getThumbnail());
+        return myObject.getSuggested_searches().get(0).getThumbnail();
+    }*/
 }

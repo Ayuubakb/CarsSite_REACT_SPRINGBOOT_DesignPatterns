@@ -1,13 +1,15 @@
 package com.Cars.Controllers;
 
+import com.Cars.Models.User;
 import com.Cars.Models.usedCar;
+import com.Cars.Observer.DataBasePublisher;
+import com.Cars.Observer.NotifObs;
 import com.Cars.Projections.Fav;
 import com.Cars.Repositories.usedCarTemplate;
 import com.Cars.Repositories.usedCarsRepo;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.Session;
-import org.apache.catalina.User;
 import org.apache.coyote.Response;
 import org.bson.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +54,8 @@ public class UserController {
                 return new ResponseEntity<>("Something Went Wrong", HttpStatusCode.valueOf(500));
             }else {
                 ((List<Fav>)userInfo.get("Favourites")).add(favCar);
+                User.countFavs.get(userInfo.get("Login"))
+                        .put(favCar.getMaker()+" "+favCar.getModel(),0L);
                 return new ResponseEntity<>("Added", HttpStatus.OK);
             }
         }else{
@@ -76,6 +80,7 @@ public class UserController {
                         iterator.remove();
                     }
                 }
+                User.countFavs.get(userInfo.get("Login")).remove(favCar.getMaker()+" "+favCar.getModel());
                 return new ResponseEntity<>("Removed", HttpStatus.OK);
             }
         }else

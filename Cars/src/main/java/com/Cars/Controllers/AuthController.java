@@ -1,6 +1,7 @@
 package com.Cars.Controllers;
 
 import com.Cars.Models.User;
+import com.Cars.Projections.Fav;
 import com.Cars.Repositories.UserRepo;
 import com.Cars.Projections.Signup;
 import com.Cars.Projections.Login;
@@ -15,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -26,6 +25,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 public class AuthController {
     @Autowired
     private UserRepo userRepository ;
+
     @PostMapping("/signup")
     public ResponseEntity<String> RegisterUser(@RequestBody Signup userInfo) throws NoSuchAlgorithmException, InvalidKeySpecException {
         User users =userRepository.findByLogin(userInfo.getLogin());
@@ -42,7 +42,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> LoginUser(@RequestBody Login login, HttpServletRequest request) throws NoSuchAlgorithmException, InvalidKeySpecException {
         User users =userRepository.findByLogin(login.getLogin());
-        //checkSession(request);
         if (users!=null){
             String givenPassword=User.hashPassword(login.getPassword());
             if(users.getPassword().equals(givenPassword)){
@@ -54,6 +53,13 @@ public class AuthController {
                 userMap.put("Favourites",users.getFavorites());
                 HttpSession session=request.getSession();
                 session.setAttribute("UserInfo",userMap);
+                HashMap<String,Long> carCount=new HashMap<>();
+
+                User.countFavs.put(
+                        users.getLogin(),
+                        carCount
+                );
+                System.out.println(User.countFavs.size());
                 return new ResponseEntity<>("Logged",HttpStatus.OK);
             }else {
                 return new ResponseEntity<>("Incorrect Password", HttpStatus.BAD_REQUEST);

@@ -1,5 +1,7 @@
 package com.Cars.Models;
 
+import com.Cars.Observer.DataBaseObserver;
+import com.Cars.Projections.CarCount;
 import com.Cars.Projections.Fav;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -23,7 +25,8 @@ public class User {
     private String password;
     private String city;
     private String phone;
-    private List<Fav> favorites;
+    private List<Fav> favorites=new ArrayList<Fav>();
+    public static HashMap<String, HashMap<String,Long>> countFavs=new HashMap<>();
 
     public String getId() {
         return id;
